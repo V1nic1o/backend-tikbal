@@ -5,8 +5,26 @@ require('dotenv').config();
 
 const app = express();
 
-// Middlewares globales
-app.use(cors());
+// ✅ CORS configurado para permitir localhost y Vercel
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://panel-admin-tikbal.vercel.app'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+  exposedHeaders: ['Content-Disposition']
+}));
+
+// Middleware de logs
 app.use(morgan('dev'));
 
 // ⚠️ Solo procesar JSON y URL encoded en rutas que no sean multipart
