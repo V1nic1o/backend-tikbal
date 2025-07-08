@@ -43,7 +43,7 @@ const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
       { text: formatearFecha(), style: 'fecha' },
       {
         text:
-          'Empresa: tu empresa\nCorreo: tu correo electronico\nTeléfono: tu numero de telefono\nDirección: Direccion de tu empresa\nNIT: nit de la empresa\n\n',
+          'Empresa: TIK´BAL\nCorreo: tikbalagricultora@gmail.com\nTeléfono: +502 3036-7561\nDirección: Ciudad de Guatemala\nNIT: nit de la empresa\n\n',
         style: 'subheader'
       },
       { text: `Cliente: ${cliente.nombre}\nNIT: ${cliente.nit}\n\n`, style: 'subheader' },
