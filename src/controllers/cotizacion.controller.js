@@ -102,9 +102,7 @@ const descargarPDF = async (req, res) => {
       const filename = `cotizacion-${id}.pdf`;
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-      const stream = fs.createReadStream(filePath);
-      stream.pipe(res);
+      res.sendFile(filePath);
     });
   } catch (err) {
     console.error('❌ Error al generar PDF:', err.message);

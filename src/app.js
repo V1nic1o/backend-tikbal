@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -21,8 +22,11 @@ app.use(cors({
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
-  exposedHeaders: ['Content-Disposition']
+  exposedHeaders: ['Content-Disposition'] // ✅ Necesario para descargar PDF
 }));
+
+// ✅ Habilita el acceso a archivos en /temp (donde se guarda el PDF)
+app.use('/temp', express.static(path.join(__dirname, '../temp')));
 
 // Middleware de logs
 app.use(morgan('dev'));
