@@ -13,19 +13,27 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rutas
+// Rutas existentes
 const authRoutes = require('./routes/auth.routes');
 const servicioRoutes = require('./routes/servicio.routes');
 const proyectoRoutes = require('./routes/proyecto.routes');
 const mensajeRoutes = require('./routes/mensaje.routes');
 const uploadRoutes = require('./routes/upload.routes');
 
-// Endpoints
+// 🆕 Nuevas rutas integradas
+const clienteRoutes = require('./routes/cliente.routes');
+const cotizacionRoutes = require('./routes/cotizacion.routes');
+
+// Endpoints existentes
 app.use('/api/auth', authRoutes);
 app.use('/api/servicios', servicioRoutes);
 app.use('/api/proyectos', proyectoRoutes);
 app.use('/api/mensajes', mensajeRoutes);
 app.use('/api/upload', uploadRoutes);
+
+// 🆕 Endpoints integrados
+app.use('/api/clientes', clienteRoutes);
+app.use('/api/cotizaciones', cotizacionRoutes);
 
 // Ruta base
 app.get('/', (req, res) => res.send('API Tikb’al funcionando ✅'));
