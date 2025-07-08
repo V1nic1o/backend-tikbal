@@ -98,6 +98,12 @@ const descargarPDF = async (req, res) => {
         return res.status(500).json({ error: 'El archivo PDF aún no está listo' });
       }
 
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="cotizacion-${id}.pdf"`);
+
       res.download(filePath, `cotizacion-${id}.pdf`);
     });
   } catch (err) {
