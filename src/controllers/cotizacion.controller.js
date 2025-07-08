@@ -1,7 +1,7 @@
 const { Cotizacion, DetalleCotizacion, Cliente } = require('../models');
 const { Op } = require('sequelize');
 const fs = require('fs');
-const path = require('path'); // Asegúrate de tener esto
+const path = require('path');
 const { generarPDFCotizacion } = require('../services/pdfService');
 
 const crearCotizacion = async (req, res) => {
@@ -100,9 +100,15 @@ const descargarPDF = async (req, res) => {
       }
 
       const filename = `cotizacion-${id}.pdf`;
+
+      // 🛡️ Encabezados para permitir descarga CORS
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.sendFile(filePath);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
+
+      const stream = fs.createReadStream(filePath);
+      stream.pipe(res);
     });
   } catch (err) {
     console.error('❌ Error al generar PDF:', err.message);
