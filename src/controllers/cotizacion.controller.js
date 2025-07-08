@@ -1,6 +1,7 @@
 const { Cotizacion, DetalleCotizacion, Cliente } = require('../models');
 const { Op } = require('sequelize');
 const fs = require('fs');
+const path = require('path'); // Asegúrate de tener esto
 const { generarPDFCotizacion } = require('../services/pdfService');
 
 const crearCotizacion = async (req, res) => {
@@ -98,13 +99,12 @@ const descargarPDF = async (req, res) => {
         return res.status(500).json({ error: 'El archivo PDF aún no está listo' });
       }
 
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      const filename = `cotizacion-${id}.pdf`;
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="cotizacion-${id}.pdf"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
-      res.download(filePath, `cotizacion-${id}.pdf`);
+      const stream = fs.createReadStream(filePath);
+      stream.pipe(res);
     });
   } catch (err) {
     console.error('❌ Error al generar PDF:', err.message);
