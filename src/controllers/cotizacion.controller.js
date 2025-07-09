@@ -1,7 +1,7 @@
 const { Cotizacion, DetalleCotizacion, Cliente } = require('../models');
 const { Op } = require('sequelize');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 const { generarPDFCotizacion } = require('../services/pdfService');
 
 const crearCotizacion = async (req, res) => {
@@ -87,6 +87,7 @@ const descargarPDF = async (req, res) => {
     const cliente = await Cliente.findByPk(cotizacion.clienteId);
     const detalles = await DetalleCotizacion.findAll({ where: { cotizacionId: id } });
 
+    // 🛡️ Validación fuerte para evitar error 500
     if (!cliente || detalles.length === 0) {
       return res.status(400).json({ error: 'No se puede generar el PDF: datos incompletos' });
     }
@@ -99,14 +100,7 @@ const descargarPDF = async (req, res) => {
         return res.status(500).json({ error: 'El archivo PDF aún no está listo' });
       }
 
-      const filename = `cotizacion-${id}.pdf`;
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-      // 🔥 Solución crucial para que funcione desde Vercel (CORS en respuesta directa)
-      res.setHeader('Access-Control-Allow-Origin', 'https://panel-admin-tikbal.vercel.app');
-
-      res.sendFile(filePath);
+      res.download(filePath, `cotizacion-${id}.pdf`);
     });
   } catch (err) {
     console.error('❌ Error al generar PDF:', err.message);
