@@ -100,15 +100,13 @@ const descargarPDF = async (req, res) => {
       }
 
       const filename = `cotizacion-${id}.pdf`;
-
-      // 🛡️ Encabezados para permitir descarga CORS
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
 
-      const stream = fs.createReadStream(filePath);
-      stream.pipe(res);
+      // 🔥 Solución crucial para que funcione desde Vercel (CORS en respuesta directa)
+      res.setHeader('Access-Control-Allow-Origin', 'https://panel-admin-tikbal.vercel.app');
+
+      res.sendFile(filePath);
     });
   } catch (err) {
     console.error('❌ Error al generar PDF:', err.message);
