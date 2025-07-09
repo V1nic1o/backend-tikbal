@@ -113,7 +113,7 @@ const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
       }
     };
 
-    // Carpeta temporal (local)
+    // 📁 Carpeta temporal local
     const tempDir = path.join(__dirname, '../../temp');
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir);
@@ -121,7 +121,7 @@ const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
 
     const filePath = path.join(tempDir, `cotizacion-${cotizacion.id}.pdf`);
 
-    // Generar PDF y luego subirlo
+    // 🛠️ Generar y subir PDF
     const pdfURL = await new Promise((resolve, reject) => {
       const pdfDoc = printer.createPdfKitDocument(docDefinition);
       const stream = fs.createWriteStream(filePath);
