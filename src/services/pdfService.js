@@ -1,6 +1,7 @@
 const PdfPrinter = require('pdfmake');
 const fs = require('fs');
 const path = require('path');
+const { subirPDFaCloudinary } = require('../config/cloudinary');
 
 // Cargar logo desde archivo
 const logoPath = path.join(__dirname, '../assets/FONDO.jpg');
@@ -8,7 +9,7 @@ const logoBase64 = fs.existsSync(logoPath)
   ? fs.readFileSync(logoPath).toString('base64')
   : null;
 
-// Función para formatear la fecha estilo "miércoles, 11 de junio de 2025"
+// Formatear fecha estilo "miércoles, 11 de junio de 2025"
 const formatearFecha = () => {
   const fecha = new Date();
   return fecha.toLocaleDateString('es-ES', {
@@ -112,6 +113,7 @@ const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
       }
     };
 
+    // Carpeta temporal (local)
     const tempDir = path.join(__dirname, '../../temp');
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir);
@@ -119,19 +121,30 @@ const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
 
     const filePath = path.join(tempDir, `cotizacion-${cotizacion.id}.pdf`);
 
-    return new Promise((resolve, reject) => {
+    // Generar PDF y luego subirlo
+    const pdfURL = await new Promise((resolve, reject) => {
       const pdfDoc = printer.createPdfKitDocument(docDefinition);
       const stream = fs.createWriteStream(filePath);
 
       pdfDoc.pipe(stream);
       pdfDoc.end();
 
-      stream.on('finish', () => resolve(filePath));
+      stream.on('finish', async () => {
+        try {
+          const url = await subirPDFaCloudinary(filePath, `cotizacion-${cotizacion.id}`);
+          resolve(url);
+        } catch (err) {
+          reject(err);
+        }
+      });
+
       stream.on('error', (err) => {
         console.error('❌ Error al escribir el PDF:', err);
         reject(err);
       });
     });
+
+    return pdfURL;
   } catch (error) {
     console.error('❌ Error al generar el PDF:', error.message);
     throw error;
