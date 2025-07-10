@@ -1,15 +1,16 @@
 const PdfPrinter = require('pdfmake');
-const fs = require('fs');
 const path = require('path');
-const { subirPDFaCloudinary } = require('../config/cloudinary');
+const { subirBufferPDFaCloudinary } = require('../config/cloudinary');
+const stream = require('stream');
 
-// Cargar logo desde archivo
+// Cargar logo como base64
+const fs = require('fs');
 const logoPath = path.join(__dirname, '../assets/FONDO.jpg');
 const logoBase64 = fs.existsSync(logoPath)
   ? fs.readFileSync(logoPath).toString('base64')
   : null;
 
-// Formatear fecha estilo "miércoles, 11 de junio de 2025"
+// Fecha estilo "miércoles, 11 de junio de 2025"
 const formatearFecha = () => {
   const fecha = new Date();
   return fecha.toLocaleDateString('es-ES', {
@@ -20,6 +21,7 @@ const formatearFecha = () => {
   });
 };
 
+// Tipografía
 const fonts = {
   Poppins: {
     normal: path.join(__dirname, '../../fonts/Poppins-Regular.ttf'),
@@ -31,6 +33,7 @@ const fonts = {
 
 const printer = new PdfPrinter(fonts);
 
+// 🔁 Función principal
 const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
   try {
     if (!cotizacion || !cliente || !detalles || detalles.length === 0) {
@@ -113,37 +116,18 @@ const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
       }
     };
 
-    // 📁 Carpeta temporal local
-    const tempDir = path.join(__dirname, '../../temp');
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir);
-    }
+    // 🧠 Convertir PDF a buffer directamente
+    const pdfBuffer = await new Promise((resolve, reject) => {
+      const doc = printer.createPdfKitDocument(docDefinition);
+      const buffers = [];
 
-    const filePath = path.join(tempDir, `cotizacion-${cotizacion.id}.pdf`);
-
-    // 🛠️ Generar y subir PDF
-    const pdfURL = await new Promise((resolve, reject) => {
-      const pdfDoc = printer.createPdfKitDocument(docDefinition);
-      const stream = fs.createWriteStream(filePath);
-
-      pdfDoc.pipe(stream);
-      pdfDoc.end();
-
-      stream.on('finish', async () => {
-        try {
-          const url = await subirPDFaCloudinary(filePath, `cotizacion-${cotizacion.id}`);
-          resolve(url);
-        } catch (err) {
-          reject(err);
-        }
-      });
-
-      stream.on('error', (err) => {
-        console.error('❌ Error al escribir el PDF:', err);
-        reject(err);
-      });
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.end();
     });
 
+    // ☁️ Subir buffer a Cloudinary con extensión .pdf incluida en el publicId
+    const pdfURL = await subirBufferPDFaCloudinary(pdfBuffer, `cotizacion-${cotizacion.id}.pdf`);
     return pdfURL;
   } catch (error) {
     console.error('❌ Error al generar el PDF:', error.message);
