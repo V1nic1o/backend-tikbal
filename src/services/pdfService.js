@@ -1,16 +1,18 @@
 const PdfPrinter = require('pdfmake');
 const path = require('path');
-const { subirBufferPDFaCloudinary } = require('../config/cloudinary');
-const stream = require('stream');
-
-// Cargar logo como base64
 const fs = require('fs');
+const { subirBufferPDFaCloudinary } = require('../config/cloudinary');
+
+// 📌 Stream no es necesario aquí, lo puedes quitar
+// const stream = require('stream');
+
+// ✅ Cargar logo como base64
 const logoPath = path.join(__dirname, '../assets/FONDO.jpg');
 const logoBase64 = fs.existsSync(logoPath)
   ? fs.readFileSync(logoPath).toString('base64')
   : null;
 
-// Fecha estilo "miércoles, 11 de junio de 2025"
+// ✅ Fecha estilo "miércoles, 11 de junio de 2025"
 const formatearFecha = () => {
   const fecha = new Date();
   return fecha.toLocaleDateString('es-ES', {
@@ -21,7 +23,7 @@ const formatearFecha = () => {
   });
 };
 
-// Tipografía
+// ✅ Tipografía personalizada
 const fonts = {
   Poppins: {
     normal: path.join(__dirname, '../../fonts/Poppins-Regular.ttf'),
@@ -33,7 +35,7 @@ const fonts = {
 
 const printer = new PdfPrinter(fonts);
 
-// 🔁 Función principal
+// 🧠 Función principal
 const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
   try {
     if (!cotizacion || !cliente || !detalles || detalles.length === 0) {
@@ -116,7 +118,7 @@ const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
       }
     };
 
-    // 🧠 Convertir PDF a buffer directamente
+    // 📄 Convertir a buffer
     const pdfBuffer = await new Promise((resolve, reject) => {
       const doc = printer.createPdfKitDocument(docDefinition);
       const buffers = [];
@@ -126,8 +128,19 @@ const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
       doc.end();
     });
 
-    // ☁️ Subir buffer a Cloudinary con extensión .pdf incluida en el publicId
-    const pdfURL = await subirBufferPDFaCloudinary(pdfBuffer, `cotizacion-${cotizacion.id}.pdf`);
+    // 🧼 Sanitizar nombre del cliente para usarlo en el archivo
+    const nombreLimpio = cliente.nombre
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // quitar tildes
+      .replace(/\s+/g, '-') // espacios a guiones
+      .replace(/[^a-zA-Z0-9\-]/g, '') // quitar símbolos raros
+      .toLowerCase();
+
+    const nombreArchivo = `cotizacion-${cotizacion.id}-${nombreLimpio}.pdf`;
+
+    // ☁️ Subir a Cloudinary con nombre final
+    const pdfURL = await subirBufferPDFaCloudinary(pdfBuffer, nombreArchivo);
+
     return pdfURL;
   } catch (error) {
     console.error('❌ Error al generar el PDF:', error.message);

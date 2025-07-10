@@ -1,6 +1,7 @@
 const { Cotizacion, DetalleCotizacion, Cliente } = require('../models');
 const { Op } = require('sequelize');
 const { generarPDFCotizacion } = require('../services/pdfService');
+const axios = require('axios');
 
 const crearCotizacion = async (req, res) => {
   const { clienteId, productos, total, observaciones } = req.body;
@@ -89,14 +90,44 @@ const descargarPDF = async (req, res) => {
       return res.status(400).json({ error: 'No se puede generar el PDF: datos incompletos' });
     }
 
-    // ⬇️ Se genera el PDF y se sube automáticamente a Cloudinary
     const pdfURL = await generarPDFCotizacion(cotizacion, cliente, detalles);
-
-    // ⬅️ En vez de descargarlo desde el servidor, devolvemos el link
     res.json({ url: pdfURL });
   } catch (err) {
     console.error('❌ Error al generar PDF:', err.message);
     res.status(500).json({ error: 'Error inesperado al generar PDF' });
+  }
+};
+
+// ✅ NUEVO: Forzar descarga directa desde Cloudinary
+const descargarPDFDirecto = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const cotizacion = await Cotizacion.findByPk(id);
+    if (!cotizacion) return res.status(404).json({ error: 'Cotización no encontrada' });
+
+    const cliente = await Cliente.findByPk(cotizacion.clienteId);
+    const detalles = await DetalleCotizacion.findAll({ where: { cotizacionId: id } });
+    if (!cliente || detalles.length === 0) return res.status(400).json({ error: 'Datos incompletos' });
+
+    const pdfURL = await generarPDFCotizacion(cotizacion, cliente, detalles);
+
+    // Descargar el PDF como buffer
+    const response = await axios.get(pdfURL, { responseType: 'arraybuffer' });
+
+    const nombreCliente = cliente.nombre.trim().replace(/\s+/g, '_');
+    const nombreArchivo = `Cotizacion_${nombreCliente}.pdf`;
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${nombreArchivo}"`,
+      'Content-Length': response.data.length
+    });
+
+    res.send(response.data);
+  } catch (err) {
+    console.error('❌ Error al forzar descarga PDF:', err.message);
+    res.status(500).json({ error: 'Error al descargar PDF directamente' });
   }
 };
 
@@ -156,6 +187,7 @@ module.exports = {
   obtenerCotizaciones,
   actualizarEstado,
   descargarPDF,
+  descargarPDFDirecto, // ✅ nuevo
   editarCotizacion,
   eliminarCotizacion
 };
