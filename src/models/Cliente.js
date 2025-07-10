@@ -1,3 +1,5 @@
+// models/Cliente.js
+
 module.exports = (sequelize, DataTypes) => {
   const Cliente = sequelize.define('Cliente', {
     nombre: {
@@ -15,6 +17,10 @@ module.exports = (sequelize, DataTypes) => {
     correo: {
       type: DataTypes.STRING,
       allowNull: true
+    },
+    telefono: {
+      type: DataTypes.STRING,
+      allowNull: true // ✅ El campo es opcional, pero puedes validarlo si lo deseas
     }
   }, {
     tableName: 'clientes',

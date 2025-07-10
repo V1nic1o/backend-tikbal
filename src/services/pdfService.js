@@ -3,9 +3,6 @@ const path = require('path');
 const fs = require('fs');
 const { subirBufferPDFaCloudinary } = require('../config/cloudinary');
 
-// 📌 Stream no es necesario aquí, lo puedes quitar
-// const stream = require('stream');
-
 // ✅ Cargar logo como base64
 const logoPath = path.join(__dirname, '../assets/FONDO.jpg');
 const logoBase64 = fs.existsSync(logoPath)
@@ -35,7 +32,6 @@ const fonts = {
 
 const printer = new PdfPrinter(fonts);
 
-// 🧠 Función principal
 const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
   try {
     if (!cotizacion || !cliente || !detalles || detalles.length === 0) {
@@ -52,7 +48,15 @@ const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
           'Empresa: TIK´BAL\nCorreo: tikbalagricultora@gmail.com\nTeléfono: +502 3036-7561\nDirección: Ciudad de Guatemala\nNIT: nit de la empresa\n\n',
         style: 'subheader'
       },
-      { text: `Cliente: ${cliente.nombre}\nNIT: ${cliente.nit}\n\n`, style: 'subheader' },
+      {
+        text:
+          `Cliente: ${cliente.nombre}\n` +
+          `NIT: ${cliente.nit}\n` +
+          `Teléfono: ${cliente.telefono || 'No proporcionado'}\n` +
+          `Correo: ${cliente.correo || 'No proporcionado'}\n` +
+          `Dirección: ${cliente.direccion || 'No proporcionada'}\n\n`,
+        style: 'subheader'
+      },
       {
         table: {
           headerRows: 1,
@@ -81,7 +85,7 @@ const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
     }
 
     contenidoPDF.push({
-      text: '\n______________________________\nFirma del Encargado de la empresa',
+      text: '\n______________________________\nFirma del Encargado de Tik´bal',
       style: 'footer'
     });
 
@@ -118,7 +122,6 @@ const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
       }
     };
 
-    // 📄 Convertir a buffer
     const pdfBuffer = await new Promise((resolve, reject) => {
       const doc = printer.createPdfKitDocument(docDefinition);
       const buffers = [];
@@ -128,17 +131,15 @@ const generarPDFCotizacion = async (cotizacion, cliente, detalles) => {
       doc.end();
     });
 
-    // 🧼 Sanitizar nombre del cliente para usarlo en el archivo
     const nombreLimpio = cliente.nombre
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // quitar tildes
-      .replace(/\s+/g, '-') // espacios a guiones
-      .replace(/[^a-zA-Z0-9\-]/g, '') // quitar símbolos raros
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, '-')
+      .replace(/[^a-zA-Z0-9\-]/g, '')
       .toLowerCase();
 
     const nombreArchivo = `cotizacion-${cotizacion.id}-${nombreLimpio}.pdf`;
 
-    // ☁️ Subir a Cloudinary con nombre final
     const pdfURL = await subirBufferPDFaCloudinary(pdfBuffer, nombreArchivo);
 
     return pdfURL;
